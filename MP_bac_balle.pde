@@ -3,12 +3,17 @@
 int nObstacles = 50;
 int nBalles = 300;
 Obstacle[] obstacles = new Obstacle[nObstacles];
-Balle[] balles = new Balle[nBalles];
+ArrayList<Balle> Balles = new ArrayList<Balle>();
+//Balle[] balles = new Balle[nBalles];
 float friction = 0.9999;
 float grav = 0.3;
 color b= color(0,0,0);
 color c= color(255,255,255);
 float vitesseMoyenne = 0;
+boolean checkClick = false;
+boolean dragging = false;
+float dragX;
+float dragY;
 bouton pause = new bouton(0,0,100,50,255,255,255,"PAUSE");
 bouton play = new bouton(100,0,100,50,255,255,255,"PLAY");
 bouton frame = new bouton(200,0,100,50,255,255,255,"+1F");
@@ -38,6 +43,7 @@ class bouton{
      if (texte == "PAUSE"){noLoop();}
      if (texte == "PLAY") {loop();}
      if (texte == "+1F") {redraw();}
+     checkClick = true;
    }
   }
 }
@@ -97,13 +103,14 @@ class Balle{
     // _-_-_-_-_-_-_-_-_-_-REBOND ENTRE BALLES-_-_-_-_-_-_-_-_-_-_
     
     for ( int i = 0; i < nBalles; i++) {
-      if (id != balles[i].id){
-        if (sqrt(sq(posX - balles[i].posX) + sq(posY - balles[i].posY)) < balles[i].rayon + rayon){
-            angle = degrees(atan2(posY - balles[i].posY, posX - balles[i].posX));
-            vitesseMoyenne = (vitesse + balles[i].vitesse)/2; 
+      Balle B = Balles.get(i);
+      if (id != B.id){
+        if (sqrt(sq(posX -B.posX) + sq(posY - B.posY)) < B.rayon + rayon){
+            angle = degrees(atan2(posY - B.posY, posX - B.posX));
+            vitesseMoyenne = (vitesse + B.vitesse)/2; 
            vitesse = vitesseMoyenne * coeffRebond;
-           balles[i].angle = degrees(atan2(balles[i].posY - posY, balles[i].posX - posX));
-           balles[i].vitesse = vitesseMoyenne * balles[i].coeffRebond;
+           B.angle = degrees(atan2(B.posY - posY, B.posX - posX));
+           B.vitesse = vitesseMoyenne * B.coeffRebond;
           if (vitesse < 0.2){
           vitesse = 0;
         }
@@ -143,7 +150,7 @@ void setup(){
    obstacles[i] = new Obstacle(int(random(100,width - 100)),int(random(100,height-100)) ,30 + int(random(-10,10)));
   }
   for ( int i = 0; i < nBalles; i++) {
-   balles[i] = new Balle(int(random(100,width - 100)),int(random(100,height - 100)),int(random(-10,10)),int(random(-10,10)),0,25,int(random(5,10)),random(0.8,0.9), i);
+   Balles.add(new Balle(int(random(100,width - 100)),int(random(100,height - 100)),int(random(-10,10)),int(random(-10,10)),0,25,int(random(5,10)),random(0.8,0.9), i));
   }
   surface.setResizable(true);
   frameRate(60);
@@ -154,7 +161,10 @@ void setup(){
 void keyPressed(){
   if (key == 'r' || key == 'R'){
     for ( int i = 0; i < nBalles; i++) {
-   balles[i] = new Balle(int(random(100,width - 100)),int(random(100,height - 100)),int(random(-10,10)),int(random(-10,10)),0,25,int(random(5,10)),random(0.8,0.9), i);
+      Balles.remove(0);
+    }
+   for ( int i = 0; i < nBalles; i++) {
+   Balles.add(new Balle(int(random(100,width - 100)),int(random(100,height - 100)),int(random(-10,10)),int(random(-10,10)),0,25,int(random(5,10)),random(0.8,0.9), i));
     }
   
     for ( int i = 0; i < nObstacles; i++){
@@ -170,7 +180,10 @@ void keyPressed(){
   }
   if (key == 'b' || key == 'B'){
     for ( int i = 0; i < nBalles; i++) {
-   balles[i] = new Balle(int(random(100,width - 100)),int(random(100,height - 100)),int(random(-10,10)),int(random(-10,10)),0,25,int(random(5,10)),random(0.8,0.9), i);
+      Balles.remove(0);
+    }
+    for ( int i = 0; i < nBalles; i++) {
+   Balles.add(new Balle(int(random(100,width - 100)),int(random(100,height - 100)),int(random(-10,10)),int(random(-10,10)),0,25,int(random(5,10)),random(0.8,0.9), i));
     }
     redraw();
   }
@@ -180,6 +193,25 @@ void mousePressed(){
   pause.checkClick();
   play.checkClick();
   frame.checkClick();
+  if (mouseButton == LEFT){
+    if (checkClick == false){
+      dragging = true;
+      dragX = mouseX; dragY = mouseY;
+    }
+  }
+  else if (mouseButton == RIGHT){
+    Balles.remove(int(random(nBalles)));
+    nBalles --;
+  }
+  checkClick = false;
+  
+}
+void mouseReleased(){
+ if (dragging == true){
+   dragging = false;
+   nBalles ++;
+   Balles.add(new Balle(dragX,dragY,(dragX - mouseX)/5,(dragY - mouseY)/5,0,180,int(random(5,10)),random(0.8,0.9), nBalles));
+ }
 }
 // =#=#=#=#=#=#=#=#BOUCLE DRAW(FAIT FONCTIONNER LE PROGRAMME)#=#=#=#=#=#=#=#=  
   
@@ -188,14 +220,16 @@ void draw(){
   fill(c);
   stroke(c);
   for ( int i = 0; i < nBalles; i++) {
-  ellipse(balles[i].posX, balles[i].posY, balles[i].rayon * 2,balles[i].rayon * 2);
-  balles[i].update();
+   Balle B = Balles.get(i);
+  ellipse(B.posX, B.posY, B.rayon * 2,B.rayon * 2);
+  B.update();
   }
   fill(124);
   stroke(124);
   for ( int i = 0; i < nObstacles; i++){
   ellipse(obstacles[i].posX,obstacles[i].posY,obstacles[i].taille, obstacles[i].taille);
   }
+  if (dragging == true){line(dragX,dragY,mouseX,mouseY);}
   pause.afficher();
   play.afficher();
   frame.afficher();
