@@ -14,6 +14,7 @@ boolean checkClick = false;
 boolean dragging = false;
 float dragX;
 float dragY;
+int closest;
 bouton pause = new bouton(0,0,100,50,255,255,255,"PAUSE");
 bouton play = new bouton(100,0,100,50,255,255,255,"PLAY");
 bouton frame = new bouton(200,0,100,50,255,255,255,"+1F");
@@ -110,10 +111,12 @@ class Balle{
             vitesseMoyenne = (vitesse + B.vitesse)/2; 
            vitesse = vitesseMoyenne * coeffRebond;
            B.angle = degrees(atan2(B.posY - posY, B.posX - posX));
-           B.vitesse = vitesseMoyenne * B.coeffRebond;
-          if (vitesse < 0.2){
+           if (vitesse < 0.2 && B.vitesse == 0){
           vitesse = 0;
+           B.vitesse = 0;
+          
         }
+        else{B.vitesse = vitesseMoyenne * B.coeffRebond;}
         }
       }
     }
@@ -200,7 +203,14 @@ void mousePressed(){
     }
   }
   else if (mouseButton == RIGHT){
-    Balles.remove(int(random(nBalles)));
+    closest = 10;
+    for ( int i = 0; i < nBalles; i++) {
+    Balle B = Balles.get(i);
+    if (sqrt(sq(mouseX - B.posX)+sq(mouseY - B.posY)) < closest){
+      closest = i;
+    }
+    }
+    Balles.remove(closest);
     nBalles --;
   }
   checkClick = false;
